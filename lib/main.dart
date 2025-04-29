@@ -1,5 +1,4 @@
 import 'package:efeflascard/screen/create_flashcard_page.dart';
-import 'package:efeflascard/screen/flashcard_set_detail_page.dart';
 import 'package:efeflascard/screen/study_mode_page.dart';
 import 'package:flutter/material.dart';
 import 'screen/login_page.dart';
@@ -29,14 +28,6 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),
         '/home': (context) => HomePage(),
-        '/flashcard-detail': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map;
-          return FlashcardSetDetailPage(
-            title: args['title'],
-            category: args['category'],
-            color: args['color'],
-          );
-        },
         '/create-flashcard': (context) => CreateFlashcardPage(),
         '/study-mode': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
@@ -51,4 +42,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-//p dah bisa
+//dah bisa tadi
+//dah sampe nampilin flashcard pada deck ya!!!!
+//dah tampil gambarnya yeye tanpa bikin api baru
+//dah bisa tambah flashcard
+//sampai perbaiki tampilan buat deck baru dan edit decknya

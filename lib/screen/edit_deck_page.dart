@@ -1,39 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:efeflascard/api/api_service.dart';
 
-class CreateFlashcardPage extends StatefulWidget {
-  const CreateFlashcardPage({super.key});
+class EditDeckPage extends StatefulWidget {
+  final String deckId;
+  final String name;
+  final String category;
+
+  const EditDeckPage({
+    super.key,
+    required this.deckId,
+    required this.name,
+    required this.category,
+  });
 
   @override
-  State<CreateFlashcardPage> createState() => _CreateFlashcardPageState();
+  State<EditDeckPage> createState() => _EditDeckPageState();
 }
 
-class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
+class _EditDeckPageState extends State<EditDeckPage> {
   final _nameController = TextEditingController();
   final _categoryController = TextEditingController();
   bool _isLoading = false;
-  String? _nameError;
-  String? _categoryError;
 
-  Future<void> _createDeck() async {
-    setState(() {
-      _nameError = _nameController.text.isEmpty ? 'Deck name is required' : null;
-      _categoryError = _categoryController.text.isEmpty ? 'Category is required' : null;
-    });
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = widget.name;
+    _categoryController.text = widget.category;
+  }
 
-    if (_nameError != null || _categoryError != null) {
+  Future<void> _editDeck() async {
+    if (_nameController.text.isEmpty || _categoryController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please fill in all fields',
-            style: GoogleFonts.poppins(),
-          ),
+        const SnackBar(
+          content: Text('Please fill in all fields'),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
         ),
       );
       return;
@@ -45,7 +46,8 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
 
     try {
       final apiService = ApiService();
-      final response = await apiService.createDeck(
+      final response = await apiService.editDeck(
+        widget.deckId,
         _nameController.text,
         _categoryController.text,
       );
@@ -53,12 +55,8 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response['message'], style: GoogleFonts.poppins()),
+            content: Text(response['message'] ?? 'Deck updated successfully'),
             backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
           ),
         );
         Navigator.pop(context);
@@ -67,15 +65,8 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Failed to create deck: $e',
-              style: GoogleFonts.poppins(),
-            ),
+            content: Text('Failed to update deck: $e'),
             backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
           ),
         );
       }
@@ -93,19 +84,17 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: Text(
-          'Create New Deck',
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
+        title: const Text('Edit Deck',
+            style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 24)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -115,9 +104,9 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Text(
-              'New Deck Details',
-              style: GoogleFonts.poppins(
+            const Text(
+              'Deck Details',
+              style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -125,8 +114,8 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Set up your new flashcard deck',
-              style: GoogleFonts.poppins(
+              'Update your flashcard deck information',
+              style: TextStyle(
                 color: Colors.grey.shade400,
                 fontSize: 14,
               ),
@@ -136,7 +125,7 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
             // Deck Name Field
             Text(
               'Deck Name',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 color: Colors.grey.shade300,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -156,7 +145,7 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
               ),
               child: TextField(
                 controller: _nameController,
-                style: GoogleFonts.poppins(color: Colors.white),
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: const Color(0xFF1E1E1E),
@@ -171,21 +160,13 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
                       width: 2,
                     ),
                   ),
-                  errorText: _nameError,
-                  errorStyle: GoogleFonts.poppins(
-                    color: Colors.redAccent,
-                    fontSize: 12,
-                  ),
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 18),
                   hintText: 'Enter deck name',
-                  hintStyle: GoogleFonts.poppins(color: Colors.grey.shade500),
-                  prefixIcon: Icon(Icons.title_rounded, 
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  prefixIcon: Icon(Icons.title_rounded,
                       color: Colors.grey.shade400),
                 ),
-                onChanged: (value) => setState(() {
-                  _nameError = value.isEmpty ? 'Deck name is required' : null;
-                }),
               ),
             ),
             const SizedBox(height: 24),
@@ -193,7 +174,7 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
             // Category Field
             Text(
               'Category',
-              style: GoogleFonts.poppins(
+              style: TextStyle(
                 color: Colors.grey.shade300,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -213,7 +194,7 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
               ),
               child: TextField(
                 controller: _categoryController,
-                style: GoogleFonts.poppins(color: Colors.white),
+                style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: const Color(0xFF1E1E1E),
@@ -228,30 +209,22 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
                       width: 2,
                     ),
                   ),
-                  errorText: _categoryError,
-                  errorStyle: GoogleFonts.poppins(
-                    color: Colors.redAccent,
-                    fontSize: 12,
-                  ),
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 18),
                   hintText: 'Enter category',
-                  hintStyle: GoogleFonts.poppins(color: Colors.grey.shade500),
-                  prefixIcon: Icon(Icons.category_rounded, 
+                  hintStyle: TextStyle(color: Colors.grey.shade500),
+                  prefixIcon: Icon(Icons.category_rounded,
                       color: Colors.grey.shade400),
                 ),
-                onChanged: (value) => setState(() {
-                  _categoryError = value.isEmpty ? 'Category is required' : null;
-                }),
               ),
             ),
             const SizedBox(height: 40),
 
-            // Create Button
+            // Save Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _createDeck,
+                onPressed: _isLoading ? null : _editDeck,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF00BCD4),
                   foregroundColor: Colors.black,
@@ -271,14 +244,14 @@ class _CreateFlashcardPageState extends State<CreateFlashcardPage> {
                           strokeWidth: 3,
                         ),
                       )
-                    : Row(
+                    : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.add_rounded),
-                          const SizedBox(width: 8),
+                          Icon(Icons.save_rounded),
+                          SizedBox(width: 8),
                           Text(
-                            'Create Deck',
-                            style: GoogleFonts.poppins(
+                            'Update Deck',
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
