@@ -2,25 +2,97 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
-  static const String baseUrl =
-      'http://10.0.2.2:3000'; // Sesuaikan dengan IP Anda atau localhost
+  static const String _baseUrlMobile =
+      // 'http://10.0.2.2:3000'; // For Android emulator
+      'http://192.168.18.66:3000'; // For POCO
+      // 'http://backend.smartflash.my.id'; //for Production 
+
+  // static const String _baseUrlWeb = 'http://localhost:3000'; // For web
+  // static const String _baseUrlWeb = 'http://192.168.18.66:3000'; // For POCO
+  static const String _baseUrlWeb =
+      'http://backend.smartflash.my.id'; //for production
+
+  static String get baseUrl => kIsWeb ? _baseUrlWeb : _baseUrlMobile;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    print('Attempting to login with email: $email');
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
+    // print('Attempting to login with email: $email at $baseUrl/auth/login');
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+      // print('Response status: ${response.statusCode}');
+      // print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to login: ${response.body}');
+      }
+    } catch (e) {
+      // print('Login error: $e');
+      throw Exception('Login failed: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> register(
+    String name,
+    String email,
+    String password,
+  ) async {
+    print(
+      'Attempting to register with email: $email at $baseUrl/auth/register',
     );
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'name': name, 'email': email, 'password': password}),
+      );
+      print('Register response status: ${response.statusCode}');
+      print('Register response body: ${response.body}');
+
+      if (response.statusCode == 201) {
+        // Assuming 201 for successful registration
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to register: ${response.body}');
+      }
+    } catch (e) {
+      print('Register error: $e');
+      throw Exception('Registration failed: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print('Retrieved token for profile: $token');
+
+    if (token == null) {
+      throw Exception('No token found. Please login first.');
+    }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('GetProfile status: ${response.statusCode}');
+    print('GetProfile body: ${response.body}');
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final data = jsonDecode(response.body);
+      return data['user'];
     } else {
-      throw Exception('Failed to login: ${response.body}');
+      throw Exception('Failed to fetch profile: ${response.body}');
     }
   }
 
@@ -320,53 +392,187 @@ class ApiService {
   }
 
   // Tambahkan di api_service.dart
-Future<Map<String, dynamic>> startQuiz(String deckId) async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token');
+  Future<void> copyFlashcards(String deckId, List<String> flashcardIds) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print('Retrieved token for copyFlashcards: $token');
 
-  if (token == null) {
-    throw Exception('No token found. Please login first.');
+    if (token == null) {
+      throw Exception('No token found. Please login first.');
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/user/decks/$deckId/copy-flashcards'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'flashcardIds': flashcardIds}),
+    );
+
+    print('CopyFlashcards status: ${response.statusCode}');
+    print('CopyFlashcards body: ${response.body}');
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to copy flashcards: ${response.body}');
+    }
   }
 
-  final response = await http.get(
-    Uri.parse('$baseUrl/user/quiz/$deckId'),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    },
-  );
+  Future<void> moveFlashcards(
+    String targetDeckId,
+    List<String> flashcardIds,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print('Retrieved token: $token');
 
-  if (response.statusCode == 200) {
-    return jsonDecode(response.body);
-  } else {
-    throw Exception('Failed to start quiz: ${response.body}');
+    if (token == null) {
+      throw Exception('No token found. Please login first.');
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/flashcards/move'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'flashcardIds': flashcardIds,
+          'targetDeckId': targetDeckId,
+        }),
+      );
+
+      print('MoveFlashcards status: ${response.statusCode}');
+      print('MoveFlashcards body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        throw Exception('Failed to move flashcards: ${response.body}');
+      }
+    } catch (e) {
+      print('MoveFlashcards error: $e');
+      throw Exception('Failed to move flashcards: $e');
+    }
   }
-}
 
-Future<Map<String, dynamic>> submitAnswer(
-  String flashcardId,
-  String userAnswer,
-) async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token');
+  // Tambahkan di api_service.dart
+  Future<Map<String, dynamic>> startQuiz(String deckId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
 
-  if (token == null) {
-    throw Exception('No token found. Please login first.');
+    if (token == null) {
+      throw Exception('No token found. Please login first.');
+    }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/quiz/$deckId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to start quiz: ${response.body}');
+    }
   }
 
-  final response = await http.post(
-    Uri.parse('$baseUrl/user/quiz/$flashcardId'),
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    },
-    body: jsonEncode({'userAnswer': userAnswer}),
-  );
+  Future<Map<String, dynamic>> submitAnswer(
+    String flashcardId,
+    String userAnswer,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
 
-  if (response.statusCode == 200) {
-    return jsonDecode(response.body);
-  } else {
-    throw Exception('Failed to submit answer: ${response.body}');
+    if (token == null) {
+      throw Exception('No token found. Please login first.');
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/user/quiz/$flashcardId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'userAnswer': userAnswer}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to submit answer: ${response.body}');
+    }
   }
-}
+
+  Future<List<dynamic>> getHistory({DateTime? date}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print('Retrieved token for history: $token');
+
+    if (token == null) {
+      throw Exception('No token found. Please login first.');
+    }
+
+    // Build the URL with optional date query parameter
+    final uri = Uri.parse('$baseUrl/user/history').replace(
+      queryParameters:
+          date != null
+              ? {
+                'date':
+                    DateTime(date.year, date.month, date.day).toIso8601String(),
+              }
+              : null,
+    );
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('GetHistory status: ${response.statusCode}');
+    print('GetHistory body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['history'];
+    } else {
+      throw Exception('Failed to fetch history: ${response.body}');
+    }
+  }
+
+  // Add this method to your ApiService class
+  Future<Map<String, dynamic>> getStats() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    print('Retrieved token for stats: $token');
+
+    if (token == null) {
+      throw Exception('No token found. Please login first.');
+    }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/stats'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('GetStats status: ${response.statusCode}');
+    print('GetStats body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['stats'];
+    } else {
+      throw Exception('Failed to fetch stats: ${response.body}');
+    }
+  }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:efeflascard/screen/register_page.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 
@@ -91,7 +92,7 @@ class _LoginPageState extends State<LoginPage>
 
       // Navigate to home page after successful login
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/main');
       }
     } catch (e) {
       if (mounted) {
@@ -418,11 +419,11 @@ class _LoginPageState extends State<LoginPage>
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   checkColor: Colors.white,
-                                  fillColor: MaterialStateProperty.resolveWith((
+                                  fillColor: WidgetStateProperty.resolveWith((
                                     states,
                                   ) {
                                     if (states.contains(
-                                      MaterialState.selected,
+                                      WidgetState.selected,
                                     )) {
                                       return Color(0xFF8A2BE2);
                                     }
@@ -480,11 +481,6 @@ class _LoginPageState extends State<LoginPage>
                                   ),
                                 ),
                       ),
-                      // SizedBox(height: 20),
-                      // _buildDivider(),
-                      // SizedBox(height: 20),
-                      // _buildSocialLoginButtons(),
-                      // SizedBox(height: 20),
                       Center(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -498,7 +494,38 @@ class _LoginPageState extends State<LoginPage>
                             ),
                             TextButton(
                               onPressed: () {
-                                Navigator.pushNamed(context, '/register');
+                                print('Sign Up button pressed');
+
+                                // Pause any ongoing animations
+                                if (_animationController.isAnimating) {
+                                  _animationController.stop();
+                                }
+
+                                // Use a safer navigation approach with fade transition
+                                Navigator.of(context).push(
+                                  PageRouteBuilder(
+                                    pageBuilder:
+                                        (
+                                          context,
+                                          animation,
+                                          secondaryAnimation,
+                                        ) => RegisterPage(),
+                                    transitionsBuilder: (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                    ) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: child,
+                                      );
+                                    },
+                                    transitionDuration: Duration(
+                                      milliseconds: 300,
+                                    ),
+                                  ),
+                                );
                               },
                               child: Text(
                                 'Sign Up',
@@ -629,7 +656,7 @@ class _LoginPageState extends State<LoginPage>
       ),
     );
   }
-  
+
   @override
   void dispose() {
     _emailController.dispose();
