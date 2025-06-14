@@ -5,36 +5,36 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
-  static const String _baseUrlMobile =
-      // 'http://10.0.2.2:3000'; // For Android emulator
-      'http://192.168.18.66:3000'; // For POCO
-      // 'http://backend.smartflash.my.id'; //for Production 
-
-  // static const String _baseUrlWeb = 'http://localhost:3000'; // For web
-  // static const String _baseUrlWeb = 'http://192.168.18.66:3000'; // For POCO
-  static const String _baseUrlWeb =
-      'http://backend.smartflash.my.id'; //for production
-
+  static const String _baseUrlMobile = 'http://192.168.100.117:3000';
+  static const String _baseUrlWeb = 'http://192.168.18.66:3000';
   static String get baseUrl => kIsWeb ? _baseUrlWeb : _baseUrlMobile;
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    // print('Attempting to login with email: $email at $baseUrl/auth/login');
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
-      // print('Response status: ${response.statusCode}');
-      // print('Response body: ${response.body}');
+      print('Login response status: ${response.statusCode}');
+      print('Login response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        final token = data['token'];
+        if (token != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('authToken', token);
+          print('Token saved to SharedPreferences: $token');
+        } else {
+          throw Exception('No token received from server');
+        }
+        return data;
       } else {
         throw Exception('Failed to login: ${response.body}');
       }
     } catch (e) {
-      // print('Login error: $e');
+      print('Login error: $e');
       throw Exception('Login failed: $e');
     }
   }
@@ -44,9 +44,6 @@ class ApiService {
     String email,
     String password,
   ) async {
-    print(
-      'Attempting to register with email: $email at $baseUrl/auth/register',
-    );
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/register'),
@@ -57,7 +54,6 @@ class ApiService {
       print('Register response body: ${response.body}');
 
       if (response.statusCode == 201) {
-        // Assuming 201 for successful registration
         return jsonDecode(response.body);
       } else {
         throw Exception('Failed to register: ${response.body}');
@@ -68,9 +64,32 @@ class ApiService {
     }
   }
 
+  Future<void> saveFCMToken(String fcmToken) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken');
+    print('Retrieved auth token for saveFCMToken: $token');
+
+    if (token == null) {
+      throw Exception('No auth token found. Please login first.');
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/user/save-token'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'fcmToken': fcmToken, 'authToken': token}),
+    );
+
+    print('SaveFCMToken status: ${response.statusCode}');
+    print('SaveFCMToken body: ${response.body}');
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to save FCM token: ${response.body}');
+    }
+  }
+
   Future<Map<String, dynamic>> getProfile() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for profile: $token');
 
     if (token == null) {
@@ -98,7 +117,7 @@ class ApiService {
 
   Future<List<dynamic>> getAllDecks() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token: $token');
 
     if (token == null) {
@@ -126,7 +145,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> createDeck(String name, String category) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for createDeck: $token');
 
     if (token == null) {
@@ -154,7 +173,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> deleteDeck(String deckId) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for deleteDeck: $token');
 
     if (token == null) {
@@ -185,7 +204,7 @@ class ApiService {
     String category,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for editDeck: $token');
 
     if (token == null) {
@@ -211,10 +230,9 @@ class ApiService {
     }
   }
 
-  // Fungsi baru untuk mengambil daftar flashcard
   Future<List<dynamic>> getFlashcards(String deckId) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for getFlashcards: $token');
 
     if (token == null) {
@@ -244,63 +262,44 @@ class ApiService {
     String deckId,
     String question,
     String answer,
-    File? imageFile,
+    File? image,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for addFlashcard: $token');
 
     if (token == null) {
       throw Exception('No token found. Please login first.');
     }
 
-    final request = http.MultipartRequest(
+    var request = http.MultipartRequest(
       'POST',
       Uri.parse('$baseUrl/user/addCard/$deckId'),
     );
-
-    // Add headers
     request.headers['Authorization'] = 'Bearer $token';
-    // Don't set Content-Type header for multipart/form-data, it will be set automatically
-
-    // Add fields
     request.fields['question'] = question;
     request.fields['answer'] = answer;
 
-    // Add image if present
-    if (imageFile != null) {
-      request.files.add(
-        await http.MultipartFile.fromPath('image', imageFile.path),
-      );
+    if (image != null) {
+      request.files.add(await http.MultipartFile.fromPath('image', image.path));
     }
 
-    try {
-      // Send request
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
 
-      print('AddFlashcard status: ${response.statusCode}');
-      print('AddFlashcard body: ${response.body}');
+    print('AddFlashcard status: ${response.statusCode}');
+    print('AddFlashcard body: $responseBody');
 
-      // Parse response
-      final responseData = jsonDecode(response.body);
-
-      if (response.statusCode == 201) {
-        return responseData;
-      } else {
-        throw Exception(
-          'Server error: ${response.statusCode} - ${responseData['message'] ?? response.body}',
-        );
-      }
-    } catch (e) {
-      print('AddFlashcard error: $e');
-      rethrow;
+    if (response.statusCode == 201) {
+      return jsonDecode(responseBody);
+    } else {
+      throw Exception('Failed to add flashcard: $responseBody');
     }
   }
 
   Future<Map<String, dynamic>> deleteFlashcard(String flashcardId) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for deleteFlashcard: $token');
 
     if (token == null) {
@@ -332,7 +331,7 @@ class ApiService {
     File? imageFile,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for editFlashcard: $token');
 
     if (token == null) {
@@ -391,10 +390,9 @@ class ApiService {
     }
   }
 
-  // Tambahkan di api_service.dart
   Future<void> copyFlashcards(String deckId, List<String> flashcardIds) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for copyFlashcards: $token');
 
     if (token == null) {
@@ -423,7 +421,7 @@ class ApiService {
     List<String> flashcardIds,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token: $token');
 
     if (token == null) {
@@ -457,10 +455,10 @@ class ApiService {
     }
   }
 
-  // Tambahkan di api_service.dart
   Future<Map<String, dynamic>> startQuiz(String deckId) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
+    print('Retrieved token for startQuiz: $token');
 
     if (token == null) {
       throw Exception('No token found. Please login first.');
@@ -474,6 +472,9 @@ class ApiService {
       },
     );
 
+    print('StartQuiz status: ${response.statusCode}');
+    print('StartQuiz body: ${response.body}');
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -486,7 +487,8 @@ class ApiService {
     String userAnswer,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
+    print('Retrieved token for submitAnswer: $token');
 
     if (token == null) {
       throw Exception('No token found. Please login first.');
@@ -501,6 +503,9 @@ class ApiService {
       body: jsonEncode({'userAnswer': userAnswer}),
     );
 
+    print('SubmitAnswer status: ${response.statusCode}');
+    print('SubmitAnswer body: ${response.body}');
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -510,14 +515,13 @@ class ApiService {
 
   Future<List<dynamic>> getHistory({DateTime? date}) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for history: $token');
 
     if (token == null) {
       throw Exception('No token found. Please login first.');
     }
 
-    // Build the URL with optional date query parameter
     final uri = Uri.parse('$baseUrl/user/history').replace(
       queryParameters:
           date != null
@@ -547,10 +551,9 @@ class ApiService {
     }
   }
 
-  // Add this method to your ApiService class
   Future<Map<String, dynamic>> getStats() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = prefs.getString('authToken');
     print('Retrieved token for stats: $token');
 
     if (token == null) {

@@ -1,4 +1,5 @@
 import 'package:efeflascard/api/api_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
@@ -63,7 +64,6 @@ class _LoginPageState extends State<LoginPage>
   }
 
   Future<void> _login() async {
-    // Basic validation
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -79,18 +79,31 @@ class _LoginPageState extends State<LoginPage>
         _passwordController.text,
       );
 
-      // Save token to SharedPreferences
-      final token = response['token'];
+      // Verifikasi token tersimpan
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', token);
+      final token = prefs.getString('authToken');
+      if (token == null) {
+        throw Exception('Token not saved correctly after login');
+      }
+      print('Verified token after login: $token');
 
+      // Simpan email jika "Remember Me" dicentang
       if (_rememberMe) {
         await prefs.setString('savedEmail', _emailController.text);
       } else {
         await prefs.remove('savedEmail');
       }
 
-      // Navigate to home page after successful login
+      // Dapatkan dan simpan FCM token
+      String? fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null) {
+        await apiService.saveFCMToken(fcmToken);
+        print('FCM token saved: $fcmToken');
+      } else {
+        print('Failed to get FCM token');
+      }
+
+      // Navigate to home page
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/main');
       }
@@ -422,9 +435,7 @@ class _LoginPageState extends State<LoginPage>
                                   fillColor: WidgetStateProperty.resolveWith((
                                     states,
                                   ) {
-                                    if (states.contains(
-                                      WidgetState.selected,
-                                    )) {
+                                    if (states.contains(WidgetState.selected)) {
                                       return Color(0xFF8A2BE2);
                                     }
                                     return Colors.white.withOpacity(0.3);
