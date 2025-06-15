@@ -216,7 +216,7 @@ class _RegisterPageState extends State<RegisterPage>
         child: Column(
           children: [
             Image.asset(
-              'assets/flashgo.png', // Replace with your logo path
+              'assets/flashgo_upgrade.png', // Replace with your logo path
               width: 120, // Match LoginPage logo size
               height: 120,
               fit: BoxFit.contain, // Ensure logo is displayed correctly

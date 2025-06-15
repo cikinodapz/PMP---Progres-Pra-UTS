@@ -238,14 +238,12 @@ class _LoginPageState extends State<LoginPage>
         position: _slideAnimation,
         child: Column(
           children: [
-            Image.asset(
-              'assets/flashgo.png', // Ganti dengan path logo Anda
-              width: 120, // Sesuaikan ukuran logo
-              height: 120,
-              fit:
-                  BoxFit
-                      .contain, // Pastikan logo ditampilkan dengan proporsi benar
+            SizedBox(
+              width: 140,
+              height: 140,
+              child: Image.asset('assets/flashgo_upgrade.png'),
             ),
+
             SizedBox(height: 16),
             Text(
               'FlashGo',

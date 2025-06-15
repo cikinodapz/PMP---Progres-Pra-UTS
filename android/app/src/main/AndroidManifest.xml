@@ -6,7 +6,7 @@
     <application
         android:label="FlashGo"
         android:name="${applicationName}"
-        android:icon="@drawable/notification_icon">
+        android:icon="@drawable/flashgo_upgrade">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -22,7 +22,7 @@
                  to determine the Window background behind the Flutter UI. -->
             <meta-data
                 android:name="com.google.firebase.messaging.default_notification_icon"
-                android:resource="@drawable/notification_icon" />
+                android:resource="@drawable/flashgo_upgrade" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

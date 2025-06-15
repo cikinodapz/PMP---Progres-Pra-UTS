@@ -349,11 +349,6 @@ class _ProfilePageState extends State<ProfilePage>
         if (_statsData != null) _buildAccuracyGauge(),
         const SizedBox(height: 24),
         if (_statsData != null) _buildAttemptsChart(),
-        const SizedBox(height: 24),
-        if (_statsData != null &&
-            _statsData!['recentDecks'] != null &&
-            (_statsData!['recentDecks'] as List<dynamic>).isNotEmpty)
-          _buildRecentDecks(),
         const SizedBox(height: 40),
       ],
     );
@@ -666,81 +661,6 @@ class _ProfilePageState extends State<ProfilePage>
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecentDecks() {
-    final recentDecks = _statsData!['recentDecks'] as List<dynamic>;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Recent Decks',
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ListView.separated(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          itemCount: recentDecks.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final deck = recentDecks[index];
-            return Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.grey.shade900.withOpacity(0.2),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
-                  width: 1,
-                ),
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: _getDeckColor(deck['category'] ?? ''),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      deck['name']?[0]?.toUpperCase() ?? '',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                title: Text(
-                  deck['name'] ?? 'Unknown',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                subtitle: Text(
-                  deck['category'] ?? 'N/A',
-                  style: GoogleFonts.poppins(color: Colors.grey.shade400),
-                ),
-                trailing: Icon(
-                  Icons.chevron_right,
-                  color: Colors.grey.shade400,
-                ),
-              ),
-            ).animate().fadeIn(delay: (700 + index * 100).ms);
-          },
         ),
       ],
     );

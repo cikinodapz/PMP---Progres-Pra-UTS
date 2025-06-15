@@ -302,17 +302,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
-                            Container(
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF8A2BE2),
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(10),
-                              child: const Icon(
-                                Icons.auto_stories,
-                                color: Colors.white,
-                                size: 24,
-                              ),
+                            Image.asset(
+                              'assets/flashgo_upgrade.png',
+                              width: 99, // Sesuaikan ukuran agar proporsional
+                              height: 99,
+                              fit:
+                                  BoxFit
+                                      .contain, // Pastikan gambar tidak terdistorsi
                             ),
                             const SizedBox(width: 12),
                             Text(
@@ -509,7 +505,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 24),
                     _buildStatisticCards(),
-
                     const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -522,61 +517,47 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade800.withOpacity(0.7),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.grey.shade700.withOpacity(0.3),
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _sortOption,
+                            icon: Icon(
+                              Icons.sort,
+                              color: Colors.grey.shade400,
+                              size: 20,
                             ),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _sortOption,
-                              icon: Icon(
-                                Icons.sort,
-                                color: Colors.grey.shade400,
-                                size: 20,
-                              ),
-                              dropdownColor: Colors.grey.shade900,
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
-                                  setState(() {
-                                    _sortOption = newValue;
-                                    _decksFuture =
-                                        _fetchDecks(); // Refresh to apply sorting
-                                    _animationController.reset();
-                                    _animationController.forward();
-                                  });
-                                }
-                              },
-                              items:
-                                  _sortOptions.map<DropdownMenuItem<String>>((
-                                    String value,
-                                  ) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(
-                                        value,
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontWeight:
-                                              value == _sortOption
-                                                  ? FontWeight.w600
-                                                  : FontWeight.normal,
-                                        ),
+                            dropdownColor: Colors.grey.shade900,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  _sortOption = newValue;
+                                  _decksFuture = _fetchDecks();
+                                  _animationController.reset();
+                                  _animationController.forward();
+                                });
+                              }
+                            },
+                            items:
+                                _sortOptions.map<DropdownMenuItem<String>>((
+                                  String value,
+                                ) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight:
+                                            value == _sortOption
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
                                       ),
-                                    );
-                                  }).toList(),
-                            ),
+                                    ),
+                                  );
+                                }).toList(),
                           ),
                         ),
                       ],
