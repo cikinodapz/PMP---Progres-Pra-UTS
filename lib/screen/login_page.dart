@@ -5,8 +5,6 @@ import 'dart:ui';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:efeflascard/screen/register_page.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lottie/lottie.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -23,7 +21,6 @@ class _LoginPageState extends State<LoginPage>
   bool _isLoading = false;
   bool _rememberMe = true;
 
-  // For animations
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -34,30 +31,22 @@ class _LoginPageState extends State<LoginPage>
   void initState() {
     super.initState();
 
-    // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 800),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(0.4, 1.0, curve: Curves.easeOut),
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.2),
+      begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Interval(0.4, 1.0, curve: Curves.easeOutCubic),
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
     );
 
-    // Start animation after build is complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animationController.forward();
     });
@@ -79,31 +68,23 @@ class _LoginPageState extends State<LoginPage>
         _passwordController.text,
       );
 
-      // Verifikasi token tersimpan
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('authToken');
       if (token == null) {
         throw Exception('Token not saved correctly after login');
       }
-      print('Verified token after login: $token');
 
-      // Simpan email jika "Remember Me" dicentang
       if (_rememberMe) {
         await prefs.setString('savedEmail', _emailController.text);
       } else {
         await prefs.remove('savedEmail');
       }
 
-      // Dapatkan dan simpan FCM token
       String? fcmToken = await FirebaseMessaging.instance.getToken();
       if (fcmToken != null) {
         await apiService.saveFCMToken(fcmToken);
-        print('FCM token saved: $fcmToken');
-      } else {
-        print('Failed to get FCM token');
       }
 
-      // Navigate to home page
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/main');
       }
@@ -147,31 +128,22 @@ class _LoginPageState extends State<LoginPage>
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
-
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Animated Background
           _buildAnimatedBackground(),
-
-          // Overlay Blur & Gradient
           _buildOverlay(),
-
-          // Main Content
-          SingleChildScrollView(
-            child: SizedBox(
-              height: size.height,
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    SizedBox(height: size.height * 0.08),
-                    _buildHeader(),
-                    SizedBox(height: size.height * 0.08),
-                    Expanded(child: _buildLoginForm(size)),
-                  ],
-                ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  SizedBox(height: 40),
+                  _buildHeader(),
+                  SizedBox(height: 40),
+                  _buildLoginForm(),
+                ],
               ),
             ),
           ),
@@ -183,7 +155,6 @@ class _LoginPageState extends State<LoginPage>
   Widget _buildAnimatedBackground() {
     return Stack(
       children: [
-        // Base gradient background
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -193,14 +164,12 @@ class _LoginPageState extends State<LoginPage>
             ),
           ),
         ),
-
-        // Abstract shapes
         Positioned(
-          top: -MediaQuery.of(context).size.height * 0.1,
-          left: -MediaQuery.of(context).size.width * 0.2,
+          top: -100,
+          left: -80,
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.7,
-            height: MediaQuery.of(context).size.width * 0.7,
+            width: 280,
+            height: 280,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
@@ -212,13 +181,12 @@ class _LoginPageState extends State<LoginPage>
             ),
           ),
         ),
-
         Positioned(
-          bottom: -MediaQuery.of(context).size.height * 0.15,
-          right: -MediaQuery.of(context).size.width * 0.15,
+          bottom: -120,
+          right: -60,
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.width * 0.8,
+            width: 320,
+            height: 320,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
@@ -230,17 +198,15 @@ class _LoginPageState extends State<LoginPage>
             ),
           ),
         ),
-
-        // Animated particles effect (simulated with dots)
-        ...List.generate(15, (index) {
+        ...List.generate(10, (index) {
           return Positioned(
             top: MediaQuery.of(context).size.height * (index % 5) / 5,
             left: MediaQuery.of(context).size.width * (index % 3) / 3,
             child: Container(
-              width: 4 + (index % 3) * 2.0,
-              height: 4 + (index % 3) * 2.0,
+              width: 4 + (index % 3),
+              height: 4 + (index % 3),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.6 - (index % 5) * 0.1),
+                color: Colors.white.withOpacity(0.5 - (index % 5) * 0.1),
                 shape: BoxShape.circle,
               ),
             ),
@@ -272,30 +238,15 @@ class _LoginPageState extends State<LoginPage>
         position: _slideAnimation,
         child: Column(
           children: [
-            // Logo placeholder
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF8A2BE2), Color(0xFF9370DB)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFF8A2BE2).withOpacity(0.5),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Center(
-                child: Icon(Icons.auto_stories, color: Colors.white, size: 40),
-              ),
+            Image.asset(
+              'assets/flashgo.png', // Ganti dengan path logo Anda
+              width: 120, // Sesuaikan ukuran logo
+              height: 120,
+              fit:
+                  BoxFit
+                      .contain, // Pastikan logo ditampilkan dengan proporsi benar
             ),
-            SizedBox(height: 24),
+            SizedBox(height: 16),
             Text(
               'FlashGo',
               style: GoogleFonts.poppins(
@@ -304,13 +255,11 @@ class _LoginPageState extends State<LoginPage>
                 color: Colors.white,
               ),
             ),
-            SizedBox(height: 8),
             Text(
               'Memorize smarter, not harder',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 color: Colors.white.withOpacity(0.7),
-                letterSpacing: 0.5,
               ),
             ),
           ],
@@ -319,13 +268,12 @@ class _LoginPageState extends State<LoginPage>
     );
   }
 
-  Widget _buildLoginForm(Size size) {
+  Widget _buildLoginForm() {
     return FadeTransition(
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _slideAnimation,
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 24),
           padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.07),
@@ -357,7 +305,7 @@ class _LoginPageState extends State<LoginPage>
                         child: Text(
                           'Welcome Back',
                           style: GoogleFonts.poppins(
-                            fontSize: 26,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -368,12 +316,12 @@ class _LoginPageState extends State<LoginPage>
                         child: Text(
                           'Login to continue your learning',
                           style: GoogleFonts.poppins(
-                            fontSize: 15,
+                            fontSize: 14,
                             color: Colors.white.withOpacity(0.7),
                           ),
                         ),
                       ),
-                      SizedBox(height: 30),
+                      SizedBox(height: 20),
                       _buildTextField(
                         controller: _emailController,
                         hintText: 'Email address',
@@ -391,7 +339,7 @@ class _LoginPageState extends State<LoginPage>
                           return null;
                         },
                       ),
-                      SizedBox(height: 16),
+                      SizedBox(height: 12),
                       _buildTextField(
                         controller: _passwordController,
                         hintText: 'Password',
@@ -403,7 +351,7 @@ class _LoginPageState extends State<LoginPage>
                                 ? Icons.visibility_outlined
                                 : Icons.visibility_off_outlined,
                             color: Colors.white70,
-                            size: 22,
+                            size: 20,
                           ),
                           onPressed: () {
                             setState(() {
@@ -411,8 +359,14 @@ class _LoginPageState extends State<LoginPage>
                             });
                           },
                         ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your password';
+                          }
+                          return null;
+                        },
                       ),
-                      SizedBox(height: 16),
+                      SizedBox(height: 12),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -470,17 +424,17 @@ class _LoginPageState extends State<LoginPage>
                           ),
                         ],
                       ),
-                      SizedBox(height: 30),
+                      SizedBox(height: 20),
                       _buildGradientButton(
                         onPressed: _isLoading ? null : _login,
                         child:
                             _isLoading
                                 ? SizedBox(
-                                  width: 24,
-                                  height: 24,
+                                  width: 20,
+                                  height: 20,
                                   child: CircularProgressIndicator(
                                     color: Colors.white,
-                                    strokeWidth: 2.5,
+                                    strokeWidth: 2,
                                   ),
                                 )
                                 : Text(
@@ -492,6 +446,7 @@ class _LoginPageState extends State<LoginPage>
                                   ),
                                 ),
                       ),
+                      SizedBox(height: 12),
                       Center(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -505,15 +460,8 @@ class _LoginPageState extends State<LoginPage>
                             ),
                             TextButton(
                               onPressed: () {
-                                print('Sign Up button pressed');
-
-                                // Pause any ongoing animations
-                                if (_animationController.isAnimating) {
-                                  _animationController.stop();
-                                }
-
-                                // Use a safer navigation approach with fade transition
-                                Navigator.of(context).push(
+                                Navigator.push(
+                                  context,
                                   PageRouteBuilder(
                                     pageBuilder:
                                         (
@@ -574,55 +522,44 @@ class _LoginPageState extends State<LoginPage>
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: GoogleFonts.poppins(color: Colors.white, fontSize: 15),
+      style: GoogleFonts.poppins(color: Colors.white, fontSize: 14),
       validator: validator,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: GoogleFonts.poppins(
           color: Colors.white.withOpacity(0.5),
-          fontSize: 15,
+          fontSize: 14,
         ),
-        prefixIcon: Icon(prefixIcon, color: Colors.white70, size: 22),
+        prefixIcon: Icon(prefixIcon, color: Colors.white70, size: 20),
         suffixIcon: suffixIcon,
         errorStyle: GoogleFonts.poppins(
           color: Colors.redAccent.shade100,
-          fontSize: 12,
+          fontSize: 11,
         ),
         filled: true,
         fillColor: Colors.white.withOpacity(0.08),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Color(0xFF8A2BE2).withOpacity(0.6),
             width: 1.5,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.1),
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
             color: Colors.redAccent.shade100.withOpacity(0.5),
-            width: 1,
           ),
         ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
-            color: Colors.redAccent.shade100.withOpacity(0.8),
-            width: 1.5,
-          ),
-        ),
-        contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       ),
     );
   }
@@ -633,16 +570,14 @@ class _LoginPageState extends State<LoginPage>
   }) {
     return Container(
       width: double.infinity,
-      height: 54,
+      height: 48,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         gradient: LinearGradient(
           colors:
               onPressed == null
                   ? [Colors.grey.shade700, Colors.grey.shade800]
                   : [Color(0xFF8A2BE2), Color(0xFF7241D1)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
         ),
         boxShadow:
             onPressed == null
@@ -659,9 +594,8 @@ class _LoginPageState extends State<LoginPage>
         color: Colors.transparent,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           splashColor: Colors.white.withOpacity(0.1),
-          highlightColor: Colors.transparent,
           child: Center(child: child),
         ),
       ),

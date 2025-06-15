@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
-  static const String _baseUrlMobile = 'http://192.168.100.117:3000';
+  static const String _baseUrlMobile = 'http://192.168.18.66:3000'; //wifi daffa
+  // static const String _baseUrlMobile = 'http://192.168.100.117:3000'; //wifi baarasobadan
+
   static const String _baseUrlWeb = 'http://192.168.18.66:3000';
   static String get baseUrl => kIsWeb ? _baseUrlWeb : _baseUrlMobile;
 

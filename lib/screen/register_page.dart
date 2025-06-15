@@ -215,27 +215,13 @@ class _RegisterPageState extends State<RegisterPage>
         position: _slideAnimation,
         child: Column(
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF8A2BE2), Color(0xFF9370DB)],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFF8A2BE2).withOpacity(0.5),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Icon(Icons.auto_stories, color: Colors.white, size: 40),
+            Image.asset(
+              'assets/flashgo.png', // Replace with your logo path
+              width: 120, // Match LoginPage logo size
+              height: 120,
+              fit: BoxFit.contain, // Ensure logo is displayed correctly
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 8), // Match the adjusted spacing from LoginPage
             Text(
               'FlashGo',
               style: GoogleFonts.poppins(

@@ -10,6 +10,7 @@ import 'screen/profile_page.dart';
 import 'screen/history_page.dart';
 import 'screen/create_flashcard_page.dart';
 import 'screen/study_mode_page.dart';
+import 'screen/splash_screen.dart';
 
 // Definisikan channel notifikasi untuk Android
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -119,7 +120,7 @@ class _MyAppState extends State<MyApp> {
         ),
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
-      initialRoute: '/login',
+      home: const SplashScreen(), // Mulai dari SplashScreen
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
