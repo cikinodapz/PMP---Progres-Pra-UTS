@@ -124,9 +124,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _checkTokenAndFetchDecks() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
+    print("$token >>>>>>>>>>>>>>>>>>>");
     if (token == null) {
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
+        // Navigator.pushReplacementNamed(context, '/login');
       }
       return;
     }

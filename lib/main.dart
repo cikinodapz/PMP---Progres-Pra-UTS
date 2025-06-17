@@ -115,6 +115,7 @@ class _MyAppState extends State<MyApp> {
       title: 'FlashCard App',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.grey.shade900,
+        
         colorScheme: ColorScheme.dark(
           primary: Colors.cyanAccent,
           secondary: Colors.purpleAccent,
@@ -138,11 +139,13 @@ class _MyAppState extends State<MyApp> {
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/home') {
+          print("unknowasd");
           return MaterialPageRoute(builder: (context) => const MainPage());
         }
         return null;
       },
       onUnknownRoute: (settings) {
+        print("unknow");
         return MaterialPageRoute(builder: (context) => const LoginPage());
       },
     );
@@ -165,44 +168,192 @@ class _MainPageState extends State<MainPage> {
     const ProfilePage(),
   ];
 
+  static final List<NavigationItem> _navigationItems = [
+    NavigationItem(
+      icon: Icons.dashboard,
+      label: 'Home',
+      tooltip: 'Dashboard',
+    ),
+    NavigationItem(
+      icon: Icons.history,
+      label: 'History',
+      tooltip: 'Riwayat Belajar',
+    ),
+    NavigationItem(
+      icon: Icons.person,
+      label: 'Profile',
+      tooltip: 'Profil Pengguna',
+    ),
+  ];
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
+  bool get _isWebLayout {
+    return MediaQuery.of(context).size.width >= 768;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF8A2BE2),
-        unselectedItemColor: Colors.grey.shade400,
-        backgroundColor: Colors.grey.shade900,
-        type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
-        ),
-        unselectedLabelStyle: GoogleFonts.poppins(),
-        onTap: _onItemTapped,
-      ),
+      body: _isWebLayout ? _buildWebLayout() : _buildMobileLayout(),
+      bottomNavigationBar: !_isWebLayout ? _buildBottomNavigation() : null,
     );
   }
+
+  Widget _buildWebLayout() {
+    return Row(
+      children: [
+        // Sidebar
+        Container(
+          width: 280,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade800,
+            border: Border(
+              right: BorderSide(
+                color: Colors.grey.shade700,
+                width: 1,
+              ),
+            ),
+          ),
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  itemCount: _navigationItems.length,
+                  itemBuilder: (context, index) {
+                    final item = _navigationItems[index];
+                    final isSelected = _selectedIndex == index;
+                    
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => _onItemTapped(index),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: isSelected
+                                  ? const Color(0xFF8A2BE2).withOpacity(0.1)
+                                  : null,
+                              border: isSelected
+                                  ? Border.all(
+                                      color: const Color(0xFF8A2BE2).withOpacity(0.3),
+                                      width: 1,
+                                    )
+                                  : null,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  item.icon,
+                                  color: isSelected
+                                      ? const Color(0xFF8A2BE2)
+                                      : Colors.grey.shade400,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    item.label,
+                                    style: GoogleFonts.poppins(
+                                      color: isSelected
+                                          ? const Color(0xFF8A2BE2)
+                                          : Colors.grey.shade300,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Footer
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Divider(color: Colors.grey.shade700),
+                    const SizedBox(height: 8),
+                    Text(
+                      'v1.0.0',
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Main Content
+        Expanded(
+          child: _pages[_selectedIndex],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return _pages[_selectedIndex];
+  }
+
+  Widget _buildBottomNavigation() {
+    return BottomNavigationBar(
+      items: _navigationItems.map((item) {
+        return BottomNavigationBarItem(
+          icon: Icon(item.icon),
+          label: item.label,
+          tooltip: item.tooltip,
+        );
+      }).toList(),
+      currentIndex: _selectedIndex,
+      selectedItemColor: const Color(0xFF8A2BE2),
+      unselectedItemColor: Colors.grey.shade400,
+      backgroundColor: Colors.grey.shade900,
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: GoogleFonts.poppins(
+        fontWeight: FontWeight.w600,
+      ),
+      unselectedLabelStyle: GoogleFonts.poppins(),
+      onTap: _onItemTapped,
+    );
+  }
+}
+
+class NavigationItem {
+  final IconData icon;
+  final String label;
+  final String tooltip;
+
+  const NavigationItem({
+    required this.icon,
+    required this.label,
+    required this.tooltip,
+  });
 }
 
 //dah bisa tadi
@@ -225,4 +376,4 @@ class _MainPageState extends State<MainPage> {
 
   // static const String _baseUrlWeb = 'http://localhost:3000'; // For web
   // static const String _baseUrlWeb = 'http://192.168.18.66:3000'; // For POCO
-  // static const String _baseUrlWeb = 'http://backend.smartflash.my.id'; //for production
+  // static const String _baseUrlWeb = 'http://backend.smartflash.my.id'; //for prod
