@@ -52,8 +52,12 @@ dependencies:
   flutter_animate: ^4.5.2
   charts_flutter: ^0.12.0
 
-  firebase_core: ^2.15.1
-  firebase_messaging: ^14.7.0
+  # firebase_core: ^2.15.1
+  # firebase_messaging: ^14.7.0
+  firebase_messaging: ^15.2.7
+  firebase_core: ^3.6.0  # Gunakan versi yang sesuai dengan firebase_messaging_web
+  firebase_messaging_web: ^3.9.0 # Gunakan versi terbaru
+  js: ^0.7.1
   flutter_local_notifications: ^19.2.1
   animated_text_kit: ^4.2.3
   

@@ -84,8 +84,9 @@ class _LoginPageState extends State<LoginPage>
       if (fcmToken != null) {
         await apiService.saveFCMToken(fcmToken);
       }
-
+      print(mounted);
       if (mounted) {
+        print('push to main');
         Navigator.pushReplacementNamed(context, '/main');
       }
     } catch (e) {
