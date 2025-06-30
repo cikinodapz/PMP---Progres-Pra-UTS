@@ -152,11 +152,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   deck['createdAt'] ?? DateTime.now().toIso8601String(),
               'flashcardCount': deck['flashcardCount'] ?? 0,
               'mastered': deck['mastered'] ?? 0,
-              'percentage': deck['percentage'] ?? 0, // Add percentage from API
+              'percentage': deck['percentage'] ?? 0,
+              'isFavorite': deck['isFavorite'] ?? false, // Add isFavorite field
             };
           }).toList();
 
-      // Rest of your existing code...
+      // Rest of the _fetchDecks method remains unchanged
       final categories =
           decks
               .map((deck) => deck['category']?.toString() ?? 'Uncategorized')
@@ -180,7 +181,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }),
       ];
 
-      // Rest of your existing animation setup...
       setState(() {
         _cardAnimations = List.generate(
           decks.length,
@@ -201,6 +201,131 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _showSnackbar('Failed to load decks: $e', isError: true);
       }
       return [];
+    }
+  }
+  //SUDAH BISA SAMPAI TOGGLE FAVORITE DAN JUGA UNFAVORITE
+
+  Future<void> _toggleFavorite(
+    String deckId,
+    String deckName,
+    bool isCurrentlyFavorite,
+  ) async {
+    if (isCurrentlyFavorite) {
+      // Tampilkan dialog konfirmasi ketika menghapus dari favorit
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              backgroundColor: Colors.grey.shade900.withOpacity(0.95),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                'Remove from Favorites',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              content: Text(
+                'Remove "$deckName" from your favorites?',
+                style: GoogleFonts.poppins(color: Colors.grey.shade300),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.poppins(color: Colors.grey.shade400),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Remove',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+      );
+
+      if (confirmed == true) {
+        await _performToggleFavorite(deckId);
+      }
+    } else {
+      // Dialog untuk menambahkan ke favorit (yang sudah ada)
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              backgroundColor: Colors.grey.shade900.withOpacity(0.95),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                'Add to Favorites',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              content: Text(
+                'Add "$deckName" to your favorites?',
+                style: GoogleFonts.poppins(color: Colors.grey.shade300),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.poppins(color: Colors.grey.shade400),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8A2BE2),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Add',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+      );
+
+      if (confirmed == true) {
+        await _performToggleFavorite(deckId);
+      }
+    }
+  }
+
+  Future<void> _performToggleFavorite(String deckId) async {
+    try {
+      final response = await apiService.toggleFavorite(deckId);
+      if (mounted) {
+        _showSnackbar(response['message']);
+        setState(() {
+          _decksFuture = _fetchDecks();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackbar('Failed to toggle favorite: $e', isError: true);
+      }
     }
   }
 
@@ -1396,6 +1521,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  // Update _buildDeckCard to include favorite button
   Widget _buildDeckCard(Map<String, dynamic> deck, List<Color> gradientColors) {
     final double percentageValue = (deck['percentage'] ?? 0) / 100;
     final AnimationController _controller = AnimationController(
@@ -1406,6 +1532,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       begin: 1.0,
       end: 0.98,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    final AnimationController _favoriteController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    final Animation<double> _favoriteScale = Tween<double>(
+      begin: 1.0,
+      end: 1.2,
+    ).animate(
+      CurvedAnimation(parent: _favoriteController, curve: Curves.easeInOut),
+    );
 
     return MouseRegion(
       onEnter: (_) => _controller.forward(),
@@ -1505,28 +1641,91 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                deck['name'],
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  shadows: [
-                                    Shadow(
-                                      blurRadius: 6,
-                                      color: Colors.black.withOpacity(0.3),
-                                      offset: const Offset(2, 2),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      deck['name'],
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        shadows: [
+                                          Shadow(
+                                            blurRadius: 6,
+                                            color: Colors.black.withOpacity(
+                                              0.3,
+                                            ),
+                                            offset: const Offset(2, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ],
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                  ),
+                                  // Dalam metode _buildDeckCard, perbarui bagian GestureDetector untuk ikon favorit:
+                                  GestureDetector(
+                                    onTap: () async {
+                                      await _favoriteController.forward();
+                                      await _toggleFavorite(
+                                        deck['id'],
+                                        deck['name'],
+                                        deck['isFavorite'],
+                                      );
+                                      _favoriteController.reverse();
+                                    },
+                                    child: ScaleTransition(
+                                      scale: _favoriteScale,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          gradient: LinearGradient(
+                                            colors: [
+                                              gradientColors[0].withOpacity(
+                                                0.2,
+                                              ),
+                                              gradientColors[1].withOpacity(
+                                                0.2,
+                                              ),
+                                            ],
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  deck['isFavorite']
+                                                      ? Colors.redAccent
+                                                          .withOpacity(0.4)
+                                                      : Colors.grey.withOpacity(
+                                                        0.2,
+                                                      ),
+                                              blurRadius: 6,
+                                              spreadRadius: 1,
+                                            ),
+                                          ],
+                                        ),
+                                        child: Icon(
+                                          deck['isFavorite']
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color:
+                                              deck['isFavorite']
+                                                  ? Colors.redAccent
+                                                  : Colors.grey.shade400,
+                                          size: 24,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               const SizedBox(height: 8),
-                              // Enhanced Category Display
                               GestureDetector(
                                 onTap: () {
-                                  // Optional: Add a subtle animation or action
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
@@ -1614,29 +1813,41 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 16),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.auto_stories,
-                          color: Colors.grey.shade400,
-                          size: 16,
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.auto_stories,
+                              color: Colors.grey.shade400,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${deck['flashcardCount']} cards',
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey.shade400,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${deck['flashcardCount']} cards',
-                          style: GoogleFonts.poppins(
-                            color: Colors.grey.shade400,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Icon(Icons.star, color: Colors.grey.shade400, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${deck['mastered']} mastered',
-                          style: GoogleFonts.poppins(
-                            color: Colors.grey.shade400,
-                            fontSize: 12,
-                          ),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.star,
+                              color: Colors.grey.shade400,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${deck['mastered']} mastered',
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey.shade400,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1655,7 +1866,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     Colors.grey.shade900,
                                   ),
-                                  minHeight: 10,
+                                  minHeight: 8,
                                 ),
                                 LinearProgressIndicator(
                                   value: percentageValue,
@@ -1663,7 +1874,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     gradientColors[0],
                                   ),
-                                  minHeight: 10,
+                                  minHeight: 8,
                                 ),
                               ],
                             ),
@@ -1687,7 +1898,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         ),
       ),
-    );
+    )..addListener(() {
+      if (_controller.isCompleted) _controller.dispose();
+      if (_favoriteController.isCompleted) _favoriteController.dispose();
+    });
   }
 
   Widget _buildAddButton() {
@@ -1816,4 +2030,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return '${date.day}/${date.month}/${date.year}';
     }
   }
+}
+
+extension on MouseRegion {
+  addListener(Null Function() param0) {}
 }
