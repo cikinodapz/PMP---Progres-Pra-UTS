@@ -9,11 +9,11 @@ import 'screen/register_page.dart';
 import 'screen/home_page.dart';
 import 'screen/profile_page.dart';
 import 'screen/history_page.dart';
+import 'screen/favorites_page.dart';
 import 'screen/create_flashcard_page.dart';
 import 'screen/study_mode_page.dart';
 import 'screen/splash_screen.dart';
 
-// Definisikan channel notifikasi untuk Android
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
   'high_importance_channel',
   'High Importance Notifications',
@@ -21,11 +21,9 @@ const AndroidNotificationChannel channel = AndroidNotificationChannel(
   importance: Importance.max,
 );
 
-// Inisialisasi plugin notifikasi lokal
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-// Handler untuk notifikasi di background
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   print('Handling a background message: ${message.messageId}');
@@ -35,10 +33,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Setup FCM
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-  // Minta izin notifikasi
   NotificationSettings settings = await messaging.requestPermission(
     alert: true,
     badge: true,
@@ -46,10 +42,8 @@ void main() async {
   );
   print('User granted permission: ${settings.authorizationStatus}');
 
-  // Setup handler untuk notifikasi di background
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Inisialisasi notifikasi lokal
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@drawable/notification_icon');
   const InitializationSettings initializationSettings = InitializationSettings(
@@ -57,11 +51,9 @@ void main() async {
   );
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-  // Buat channel notifikasi untuk Android
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin
-      >()
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 
   runApp(const MyApp());
@@ -82,7 +74,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _setupFCM() async {
-    // Handler untuk notifikasi di foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Got a message whilst in the foreground!');
       print('Message data: ${message.data}');
@@ -104,7 +95,6 @@ class _MyAppState extends State<MyApp> {
       }
     });
 
-    // Handler untuk notifikasi saat aplikasi dibuka
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('A new onMessageOpenedApp event was published!');
     });
@@ -117,14 +107,13 @@ class _MyAppState extends State<MyApp> {
       title: 'FlashCard App',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.grey.shade900,
-
         colorScheme: ColorScheme.dark(
           primary: Colors.deepPurple,
           secondary: Colors.purpleAccent,
         ),
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
-      home: const SplashScreen(), // Mulai dari SplashScreen
+      home: const SplashScreen(),
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
@@ -167,6 +156,7 @@ class _MainPageState extends State<MainPage> {
   static final List<Widget> _pages = <Widget>[
     const HomePage(),
     const HistoryPage(),
+    const FavoritesPage(),
     const ProfilePage(),
   ];
 
@@ -176,6 +166,11 @@ class _MainPageState extends State<MainPage> {
       icon: Icons.history,
       label: 'History',
       tooltip: 'Riwayat Belajar',
+    ),
+    NavigationItem(
+      icon: Icons.favorite,
+      label: 'Favorites',
+      tooltip: 'Favorite Decks',
     ),
     NavigationItem(
       icon: Icons.person,
@@ -205,7 +200,6 @@ class _MainPageState extends State<MainPage> {
   Widget _buildWebLayout() {
     return Row(
       children: [
-        // Sidebar
         Container(
           width: 250,
           decoration: BoxDecoration(
@@ -222,7 +216,6 @@ class _MainPageState extends State<MainPage> {
                 indent: 16,
                 endIndent: 16,
               ),
-              // Navigation Items
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 8),
@@ -240,33 +233,29 @@ class _MainPageState extends State<MainPage> {
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
                         decoration: BoxDecoration(
-                          color:
-                              isSelected
-                                  ? Colors.deepPurple.withOpacity(0.15)
-                                  : Colors.transparent,
+                          color: isSelected
+                              ? Colors.deepPurple.withOpacity(0.15)
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: ListTile(
                           leading: Icon(
                             item.icon,
-                            color:
-                                isSelected
-                                    ? Colors.deepPurple
-                                    : Colors.grey.shade500,
+                            color: isSelected
+                                ? Colors.deepPurple
+                                : Colors.grey.shade500,
                             size: 22,
                           ),
                           title: Text(
                             item.label,
                             style: GoogleFonts.poppins(
-                              color:
-                                  isSelected
-                                      ? Colors.deepPurple
-                                      : Colors.grey.shade300,
+                              color: isSelected
+                                  ? Colors.deepPurple
+                                  : Colors.grey.shade300,
                               fontSize: 14,
-                              fontWeight:
-                                  isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                             ),
                           ),
                           onTap: () => _onItemTapped(index),
@@ -281,7 +270,6 @@ class _MainPageState extends State<MainPage> {
                   },
                 ),
               ),
-              // Footer
               Container(
                 padding: const EdgeInsets.symmetric(
                   vertical: 16,
@@ -317,7 +305,6 @@ class _MainPageState extends State<MainPage> {
             ],
           ),
         ),
-        // Main Content
         Expanded(
           child: Container(
             color: const Color(0xFF121212),
@@ -334,14 +321,13 @@ class _MainPageState extends State<MainPage> {
 
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(
-      items:
-          _navigationItems.map((item) {
-            return BottomNavigationBarItem(
-              icon: Icon(item.icon),
-              label: item.label,
-              tooltip: item.tooltip,
-            );
-          }).toList(),
+      items: _navigationItems.map((item) {
+        return BottomNavigationBarItem(
+          icon: Icon(item.icon),
+          label: item.label,
+          tooltip: item.tooltip,
+        );
+      }).toList(),
       currentIndex: _selectedIndex,
       selectedItemColor: const Color(0xFF8A2BE2),
       unselectedItemColor: Colors.grey.shade400,

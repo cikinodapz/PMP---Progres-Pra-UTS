@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class ApiService {
-  static const String _baseUrlMobile = 'http://192.168.18.66:3000'; //wifi daffa
+  // static const String _baseUrlMobile = 'http://192.168.18.66:3000'; //wifi daffa Kontrakan
+  static const String _baseUrlMobile = 'http://10.0.2.2:3000'; //emulator
   // static const String _baseUrlMobile = 'http://192.168.100.117:3000'; //wifi baarasobadan
 
   static const String _baseUrlWeb = 'http://192.168.18.66:3000';
@@ -229,6 +230,65 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Failed to edit deck: ${response.body}');
+    }
+  }
+
+  Future<List<dynamic>> getFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken');
+    print('Retrieved token for favorites: $token');
+
+    if (token == null) {
+      throw Exception('No token found. Please login first.');
+    }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/favorites'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print('GetFavorites status: ${response.statusCode}');
+    print('GetFavorites body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch favorite decks: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> toggleFavorite(String deckId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('authToken');
+    print('Retrieved token for toggleFavorite: $token');
+
+    if (token == null) {
+      throw Exception('No token found. Please login first.');
+    }
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$baseUrl/user/toggleFavorite/$deckId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('ToggleFavorite status: ${response.statusCode}');
+      print('ToggleFavorite body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to toggle favorite: ${response.body}');
+      }
+    } catch (e) {
+      print('ToggleFavorite error: $e');
+      throw Exception('Failed to toggle favorite: $e');
     }
   }
 
