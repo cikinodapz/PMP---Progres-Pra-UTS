@@ -60,7 +60,8 @@ void main() async {
   // Buat channel notifikasi untuk Android
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
+        AndroidFlutterLocalNotificationsPlugin
+      >()
       ?.createNotificationChannel(channel);
 
   runApp(const MyApp());
@@ -116,9 +117,9 @@ class _MyAppState extends State<MyApp> {
       title: 'FlashCard App',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.grey.shade900,
-        
+
         colorScheme: ColorScheme.dark(
-          primary: Colors.cyanAccent,
+          primary: Colors.deepPurple,
           secondary: Colors.purpleAccent,
         ),
         textTheme: GoogleFonts.poppinsTextTheme(),
@@ -170,11 +171,7 @@ class _MainPageState extends State<MainPage> {
   ];
 
   static final List<NavigationItem> _navigationItems = [
-    NavigationItem(
-      icon: Icons.dashboard,
-      label: 'Home',
-      tooltip: 'Dashboard',
-    ),
+    NavigationItem(icon: Icons.dashboard, label: 'Home', tooltip: 'Dashboard'),
     NavigationItem(
       icon: Icons.history,
       label: 'History',
@@ -210,80 +207,74 @@ class _MainPageState extends State<MainPage> {
       children: [
         // Sidebar
         Container(
-          width: 280,
+          width: 250,
           decoration: BoxDecoration(
-            color: Colors.grey.shade800,
+            color: const Color(0xFF1A1A1A),
             border: Border(
-              right: BorderSide(
-                color: Colors.grey.shade700,
-                width: 1,
-              ),
+              right: BorderSide(color: Colors.grey.shade800, width: 1),
             ),
           ),
           child: Column(
             children: [
+              const Divider(
+                color: Color(0xFF2A2A2A),
+                thickness: 1,
+                indent: 16,
+                endIndent: 16,
+              ),
+              // Navigation Items
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: _navigationItems.length,
                   itemBuilder: (context, index) {
                     final item = _navigationItems[index];
                     final isSelected = _selectedIndex == index;
-                    
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 12,
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
                         vertical: 4,
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () => _onItemTapped(index),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              color: isSelected
-                                  ? const Color(0xFF8A2BE2).withOpacity(0.1)
-                                  : null,
-                              border: isSelected
-                                  ? Border.all(
-                                      color: const Color(0xFF8A2BE2).withOpacity(0.3),
-                                      width: 1,
-                                    )
-                                  : null,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  item.icon,
-                                  color: isSelected
-                                      ? const Color(0xFF8A2BE2)
-                                      : Colors.grey.shade400,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Text(
-                                    item.label,
-                                    style: GoogleFonts.poppins(
-                                      color: isSelected
-                                          ? const Color(0xFF8A2BE2)
-                                          : Colors.grey.shade300,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        decoration: BoxDecoration(
+                          color:
+                              isSelected
+                                  ? Colors.deepPurple.withOpacity(0.15)
+                                  : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListTile(
+                          leading: Icon(
+                            item.icon,
+                            color:
+                                isSelected
+                                    ? Colors.deepPurple
+                                    : Colors.grey.shade500,
+                            size: 22,
+                          ),
+                          title: Text(
+                            item.label,
+                            style: GoogleFonts.poppins(
+                              color:
+                                  isSelected
+                                      ? Colors.deepPurple
+                                      : Colors.grey.shade300,
+                              fontSize: 14,
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
                             ),
                           ),
+                          onTap: () => _onItemTapped(index),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          tileColor: Colors.transparent,
+                          hoverColor: Colors.grey.shade800.withOpacity(0.3),
                         ),
                       ),
                     );
@@ -292,16 +283,32 @@ class _MainPageState extends State<MainPage> {
               ),
               // Footer
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 20,
+                ),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: Color(0xFF2A2A2A), width: 1),
+                  ),
+                ),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Divider(color: Colors.grey.shade700),
-                    const SizedBox(height: 8),
                     Text(
-                      'v1.0.0',
+                      'FlashCard App',
                       style: GoogleFonts.poppins(
                         color: Colors.grey.shade500,
                         fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Version 1.0.0 • © 2025',
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade600,
+                        fontSize: 10,
                       ),
                     ),
                   ],
@@ -312,7 +319,10 @@ class _MainPageState extends State<MainPage> {
         ),
         // Main Content
         Expanded(
-          child: _pages[_selectedIndex],
+          child: Container(
+            color: const Color(0xFF121212),
+            child: _pages[_selectedIndex],
+          ),
         ),
       ],
     );
@@ -324,21 +334,20 @@ class _MainPageState extends State<MainPage> {
 
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(
-      items: _navigationItems.map((item) {
-        return BottomNavigationBarItem(
-          icon: Icon(item.icon),
-          label: item.label,
-          tooltip: item.tooltip,
-        );
-      }).toList(),
+      items:
+          _navigationItems.map((item) {
+            return BottomNavigationBarItem(
+              icon: Icon(item.icon),
+              label: item.label,
+              tooltip: item.tooltip,
+            );
+          }).toList(),
       currentIndex: _selectedIndex,
       selectedItemColor: const Color(0xFF8A2BE2),
       unselectedItemColor: Colors.grey.shade400,
       backgroundColor: Colors.grey.shade900,
       type: BottomNavigationBarType.fixed,
-      selectedLabelStyle: GoogleFonts.poppins(
-        fontWeight: FontWeight.w600,
-      ),
+      selectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
       unselectedLabelStyle: GoogleFonts.poppins(),
       onTap: _onItemTapped,
     );
